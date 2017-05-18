@@ -1,0 +1,31 @@
+import requests
+import math
+import json
+from pprint import pprint
+
+req_data = requests.get("https://ip-ranges.amazonaws.com/ip-ranges.json").json()
+
+region_ip_range = {}
+
+service_ip_range = {}
+
+for block in req_data["prefixes"]:
+	region = block["region"]
+	ip_prefix = block["ip_prefix"].split("/")[1]
+	service = block["service"]
+	total_ip = math.pow(2, 32-int(ip_prefix)) -2
+	total_ip = int(total_ip)
+	if region in region_ip_range:
+		region_ip_range[region] = region_ip_range[region] + total_ip
+	else:
+		region_ip_range[region] = total_ip
+	if service in service_ip_range:
+		service_ip_range[service] = service_ip_range[service] + total_ip
+	else:
+		service_ip_range[service] = total_ip
+
+f = open('regionwise_ipaddres_count.json', 'w')
+f.write(json.dumps(region_ip_range,indent=4))
+f.write("\n############# AMAZON ip address per service ##################\n")
+f.write(json.dumps(service_ip_range,indent=4))
+f.close()
